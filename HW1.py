@@ -1,7 +1,3 @@
-!pip install streamlit
-!pip install pymupdf
-!pip install openai
-
 import streamlit as st
 import fitz  # PyMuPDF
 from openai import OpenAI, OpenAIError

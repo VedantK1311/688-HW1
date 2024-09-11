@@ -2,6 +2,7 @@ import streamlit as st
 import fitz  # PyMuPDF
 from openai import OpenAI, OpenAIError
 
+def hw1():
 st.title("Document Question Answering")
 st.write(
     "Upload a document below and ask a question about it – GPT will answer! "

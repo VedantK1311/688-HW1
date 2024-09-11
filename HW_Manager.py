@@ -1,5 +1,5 @@
 import streamlit as st
-from hw1 import hw1
+from HW1 import HW1
 from hw2 import hw2
 
 # Creating a Streamlit app that navigates like a multi-page application.
@@ -7,10 +7,10 @@ from hw2 import hw2
 
 # Create a sidebar for navigation
 st.sidebar.title("Navigation")
-choice = st.sidebar.radio("Go to", ("hw 1", "hw 2"))
+choice = st.sidebar.radio("Go to", ("HW 1", "hw 2"))
 
 # Conditional rendering based on the sidebar choice
-if choice == "Lab 1":
+if choice == "HW 1":
     hw1()  
-elif choice == "Lab 2":
+elif choice == "hw 2":
     hw2()  

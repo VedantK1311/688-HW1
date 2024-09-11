@@ -13,6 +13,14 @@ def read_url_content(url):
         st.error(f"Error reading {url}: {e}")
         return None
 
+def validate_key(api_key, llm_choice):
+    # Placeholder function to 'validate' the API key
+    # Replace this logic with actual validation process
+    if api_key and len(api_key) > 20:  # Assuming a valid key should be at least 20 characters
+        return True
+    else:
+        return False
+
 # Define the main function to encapsulate all functionalities
 def hw2():
     st.header("URL Summarizer")
@@ -38,16 +46,12 @@ def hw2():
 
     api_key = st.sidebar.text_input("Enter API Key for chosen LLM", "")
 
-    # Placeholder for API key validation
     if st.sidebar.button("Validate API Key"):
-        # Function validate_key would need to be implemented to actually validate API keys
-        # This is just a placeholder
-        if validate_key(api_key, llm_choice):  # Assuming validate_key is a function
+        if validate_key(api_key, llm_choice):
             st.sidebar.success("API Key is valid!")
         else:
             st.sidebar.error("Invalid API Key!")
 
-    # Button to trigger summarization
     if st.button("Summarize"):
         text = read_url_content(url)
         if text:
@@ -55,6 +59,5 @@ def hw2():
             summary = "This is a placeholder summary of the text based on your selections."
             st.write(summary)
 
-# This checks if the script is run directly (i.e., not imported as a module)
 if __name__ == "__main__":
     hw2()

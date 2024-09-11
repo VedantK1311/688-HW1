@@ -1,9 +1,10 @@
 import streamlit as st
-from HW1 import HW1  
-from hw2 import hw2
+from HW1 import HW1  # Assuming HW1() is correctly defined in the HW1.py file
+from hw2 import hw2  # Assuming hw2() is correctly defined in the hw2.py file
 
 # Creating a Streamlit app that navigates like a multi-page application.
-# Each function 'HW1' and 'hw2' should be defined in their respective modules and should contain the Streamlit code to run each app page.
+# Make sure each function 'HW1' and 'hw2' is defined in their respective modules 
+# and contains the Streamlit code to run each app page.
 
 # Create a sidebar for navigation
 st.sidebar.title("Navigation")
@@ -13,4 +14,4 @@ choice = st.sidebar.radio("Go to", ("HW 1", "HW 2"))  # Ensured consistent capit
 if choice == "HW 1":
     HW1()  # Corrected to match the imported function
 elif choice == "HW 2":
-    hw2()  
+    hw2()  # Ensure hw2() is correctly defined and imported

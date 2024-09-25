@@ -3,3 +3,4 @@ PyMuPDF
 openai
 beautifulsoup4>=4.9.0
 google-generativeai
+chroma-py==0.1.0

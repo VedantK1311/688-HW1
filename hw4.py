@@ -1,82 +1,83 @@
 import streamlit as st
 import openai
-from chroma_py import ChromaDB
-import pdfplumber  # To extract text from PDF
+import chromadb
+from chromadb.config import Settings
+from chromadb.utils import embedding_functions
+import PyPDF2
+import os
 
-# Function to extract text from PDF
-def extract_text_from_pdf(pdf_path):
-    with pdfplumber.open(pdf_path) as pdf:
-        full_text = ''
-        for page in pdf.pages:
-            full_text += page.extract_text()
-    return full_text
+# OpenAI API Key
+openai.api_key = 'your_openai_key'
 
-# Function to create and populate the ChromaDB
-def create_chromadb():
+def initialize_chroma_db():
+    # Check if the vectorDB is already stored in session state
     if 'Lab4_vectorDB' not in st.session_state:
-        # Initialize ChromaDB
-        db = ChromaDB("Lab4_vectorDB")
+        # Setting up ChromaDB
+        client = chromadb.Client(Settings(allow_reset=True))
         
-        # Define the collection
-        collection = db.create_collection("Lab4Collection", model="text-embedding-3-small")
-        
-        # List of PDF files
-        pdf_files = ['file1.pdf', 'file2.pdf', 'file3.pdf', 'file4.pdf', 'file5.pdf', 'file6.pdf', 'file7.pdf']
-        
-        for pdf_file in pdf_files:
-            text = extract_text_from_pdf(pdf_file)
-            # Use OpenAI to get embeddings
-            response = openai.Embedding.create(input=text, model="text-embedding-3-small")
-            embedding = response['data']['embedding']
+        # Create a collection
+        collection = client.create_collection("Lab4Collection")
+
+        # Load all PDFs and extract text
+        pdf_files = ['IST736-Text-Mining-Syllabus.pdf', 'IST691 Deep Learning in Practice Syllabus.pdf', 
+                     'IST614 Info tech Mgmt & Policy Syllabus.pdf', 'IST 652 Syllabus.pdf', 
+                     'IST688-BuildingHC-AIAppsV2.pdf', 'IST 644 Syllabus.pdf', 'IST 782 Syllabus.pdf']
+
+        for pdf in pdf_files:
+            # Extract text from PDF
+            text = extract_text_from_pdf(f"/mnt/data/{pdf}")
             
-            # Add document to ChromaDB
-            collection.add_document(pdf_file, embedding, metadata={'filename': pdf_file})
-        
-        st.session_state['Lab4_vectorDB'] = db
+            # Get embedding
+            embedding = get_openai_embedding(text)
+            
+            # Add document to the ChromaDB collection
+            collection.add([pdf], metadatas=[{"filename": pdf}], embeddings=[embedding])
 
-# Chatbot response function
-def chatbot_response(query):
+        # Store the collection in session state
+        st.session_state.Lab4_vectorDB = collection
+
+def extract_text_from_pdf(file_path):
+    # Read PDF file
+    with open(file_path, 'rb') as file:
+        reader = PyPDF2.PdfFileReader(file)
+        text = ""
+        for page_num in range(reader.numPages):
+            text += reader.getPage(page_num).extract_text()
+        return text
+
+def get_openai_embedding(text):
+    # Generate embedding using OpenAI
+    response = openai.Embedding.create(input=text, model="text-embedding-ada-002")
+    return response['data'][0]['embedding']
+
+def search_vector_db(query):
     if 'Lab4_vectorDB' in st.session_state:
-        # Perform a search in the ChromaDB
-        results = st.session_state['Lab4_vectorDB'].search(query, top_k=1)
-        if results:
-            response = openai.ChatCompletion.create(
-                model="gpt-4o",
-                messages=[{"role": "system", "content": "You are an assistant trained on diverse topics."},
-                          {"role": "user", "content": query},
-                          {"role": "assistant", "content": results[0].text}]
-            )
-            return response.choices[0].message['content']
-        else:
-            return "No relevant data found."
+        # Retrieve collection
+        collection = st.session_state.Lab4_vectorDB
+        
+        # Get query embedding
+        query_embedding = get_openai_embedding(query)
+        
+        # Search in the collection
+        results = collection.query(query_embeddings=[query_embedding], n_results=3)
+        
+        return results['metadatas']
     else:
-        return "Database not initialized."
+        st.write("ChromaDB not initialized yet.")
 
-# Main Streamlit app
-def main():
-    st.title("Lab 4 App")
+# Main chatbot function using Streamlit
+def chatbot():
+    st.title("Lab 4")
+    
+    # Initialize ChromaDB if not done yet
+    initialize_chroma_db()
 
-    # Button to create and load the database
-    if st.button("Create/Load ChromaDB"):
-        create_chromadb()
-        st.success("ChromaDB is ready!")
-
-    # Chat interface
-    query = st.text_input("Ask something about your course:")
-    if st.button("Ask"):
-        reply = chatbot_response(query)
-        st.text_area("Response:", value=reply, height=300)
-
-    # Testing search functionality
-    option = st.selectbox("Choose a topic to search:",
-                          ["Generative AI", "Text Mining", "Data Science Overview"])
-    if st.button("Search"):
-        if 'Lab4_vectorDB' in st.session_state:
-            results = st.session_state['Lab4_vectorDB'].search(option, top_k=3)
-            for result in results:
-                st.write(result.metadata['filename'])
-        else:
-            st.error("ChromaDB is not loaded. Please initialize the database first.")
-
-if __name__ == "__main__":
-    main()
+    # Text input for query
+    user_input = st.text_input("Enter your search query:")
+    
+    if user_input:
+        # Search the vector database
+        results = search_vector_db(user_input)
+        st.write("Top matching documents:")
+        for result in results:
+            st.write(result['filename'])
